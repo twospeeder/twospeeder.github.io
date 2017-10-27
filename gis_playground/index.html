@@ -5,7 +5,7 @@
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
         <meta name="apple-mobile-web-app-capable" content="yes">
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
         <script src="https://js.arcgis.com/3.22compact/"></script>
 
@@ -78,16 +78,25 @@
             });
         </script>
 
-        <style>
-            html, body, #map {
-                height: 100%;
-                padding: 0;
-                margin: 0;
-            }
-        </style>
         <title></title>
     </head>
     <body class="nihilo">
-        <div id="map"></div>
+        <div id="mapView" data-dojo-type="dojox.mobile.View" data-dojo-props="selected: true">
+          <div id="header" data-dojo-type="dojox.mobile.Heading">
+            <div id="aboutButton" data-dojo-type="dojox.mobile.ToolBarButton" style="float: right;" moveTo="aboutView">
+              About
+            </div>
+          </div>
+          <div id="mapContainer" data-dojo-type="dojox.mobile.ContentPane">
+            <div id="map"></div>
+          </div>
+        </div>
+
+        <div id="aboutView" data-dojo-type="dojox.mobile.View">
+          <h1 data-dojo-type="dojox.mobile.Heading" data-dojo-props="back:'Map', moveTo:'mapView'">About</h1>
+
+          <p style="padding: 5px;">This area can contain additional information about your application.</p>
+
+        </div>
     </body>
 </html>
