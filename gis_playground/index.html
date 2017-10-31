@@ -97,7 +97,7 @@
                 });
 
                 function searchSeats(evt) {
-                    var pt = webMercatorUtils.webMercatorToGeographic(e.mapPoint);
+                    var pt = webMercatorUtils.webMercatorToGeographic(evt.mapPoint);
                     var sgResults = sg.searchByLoc(pt);
                     sgResults.then(searchSuccess, searchFail);
                 }
