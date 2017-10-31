@@ -4,7 +4,7 @@ define([
     "esri/request"
 ], function(declare, lang, esriRequest){
 
-    declare(null, {
+    return declare([], {
         distance: null,
         lastSearchResult: null,
         perPage: null,
