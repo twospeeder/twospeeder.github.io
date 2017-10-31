@@ -7,6 +7,11 @@
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
         <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
+        <script>
+            var dojoConfig = {
+                paths: {extras: location.pathname.replace(/\/[^/]+$/, "") + "/extras" }
+            }
+        </script>
         <script src="https://js.arcgis.com/3.22compact/"></script>
 
         <link rel="stylesheet" href="https://js.arcgis.com/3.22/esri/css/esri.css" />
@@ -21,6 +26,7 @@
                 "esri/graphic",
                 "esri/symbols/SimpleMarkerSymbol",
                 "esri/geometry/screenUtils",
+                "esri/geometry/webMercatorUtils",
                 "dojox/mobile",
                 "dojox/mobile/parser",
                 "esri/sniff",
@@ -31,13 +37,14 @@
                 "dojo/_base/Color",
                 "dijit/registry",
                 "dojo/on",
+                "extras/SeatGeekSearch",
                 "dojox/mobile/ToolBarButton",
                 "dojox/mobile/View",
                 "dojox/mobile/ContentPane",
                 "dojo/domReady!"
             ], function(Map, Search, Extent, Graphic, SimpleMarkerSymbol,
-                screenUtils, mobile, parser, has, dTheme, dom, domConstruct,
-                query, Color, registry, on) {
+                screenUtils, webMercatorUtils, mobile, parser, has, dTheme, dom, domConstruct,
+                query, Color, registry, on, SeatGeekSearch) {
                 parser.parse();
                 mobile.hideAddressBar();
 
@@ -82,6 +89,26 @@
                     slider: false
                 });
                 map.on("load", mapLoadHandler);
+                map.on("click", searchSeats);
+
+                var sg = new SeatGeekSearch({
+                    distance: "20mi",
+                    perPage: 10
+                });
+
+                function searchSeats(evt) {
+                    var pt = webMercatorUtils.webMercatorToGeographic(e.mapPoint);
+                    var sgResults = sg.searchByLoc(pt);
+                    sgResults.then(searchSuccess, searchFail);
+                }
+
+                function searchSuccess(results) {
+                    console.log(results);
+                }
+
+                function searchFail(err) {
+                    console.log("Search failed: ", err);
+                }
                 function mapLoadHandler(evt) {
                     resizeMap();
                     registry.byId('mapView').on('AfterTransitionIn', resizeMap);
@@ -108,7 +135,7 @@
                     "ymax": 4042715
                 });
 
-                search.sources[0].searchExtent = extent;
+                //search.sources[0].searchExtent = extent;
 
                 search.startup();
                 search.on("select-result", showLocation);
