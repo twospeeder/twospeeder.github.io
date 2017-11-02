@@ -3,212 +3,70 @@
     <head>
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
         <meta http-equiv="X-UA-Compatible" content="IE=edge">
-        <meta name="apple-mobile-web-app-capable" content="yes">
-        <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+        <meta name="viewport" content="initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
 
-        <script>
-            var dojoConfig = {
-                paths: { extras: location.pathname.replace(/\/[^/]+$/, "") + "/extras" }
-              };
-        </script>
-        <script src="https://js.arcgis.com/3.22compact/"></script>
+        <script src="https://js.arcgis.com/4.5/"></script>
 
-        <link rel="stylesheet" href="https://js.arcgis.com/3.22/esri/css/esri.css" />
-        <link rel="stylesheet" href="https://js.arcgis.com/3.22/dijit/themes/nihilo/nihilo.css" />
+        <link rel="stylesheet" href="https://js.arcgis.com/4.5/esri/css/main.css" />
+        <link rel="stylesheet" href="https://js.arcgis.com/4.5/dijit/themes/nihilo/nihilo.css" />
         <link rel="stylesheet" href="css/main.css" />
 
         <script>
             require([
-                "esri/map",
-                "esri/dijit/Search",
-                "esri/geometry/Extent",
-                "esri/graphic",
-                "esri/symbols/SimpleMarkerSymbol",
-                "esri/geometry/screenUtils",
-                "esri/geometry/webMercatorUtils",
-                "dojox/mobile",
-                "dojox/mobile/parser",
-                "esri/sniff",
-                "dojox/mobile/deviceTheme",
-                "dojo/dom",
-                "dojo/dom-construct",
-                "dojo/query",
-                "dojo/_base/Color",
-                "dijit/registry",
-                "dojo/on",
-                "extras/SeatGeekSearch",
-                "dojox/mobile/ToolBarButton",
-                "dojox/mobile/View",
-                "dojox/mobile/ContentPane",
+                "esri/Map",
+                "esri/tasks/Locator",
+                "esri/views/MapView",
+                "esri/widgets/BasemapToggle",
                 "dojo/domReady!"
-            ], function(Map, Search, Extent, Graphic, SimpleMarkerSymbol,
-                screenUtils, webMercatorUtils, mobile, parser, has, dTheme, dom, domConstruct,
-                query, Color, registry, on, SeatGeekSearch) {
-                parser.parse();
-                mobile.hideAddressBar();
+            ], function(Map, Locator, MapView, BasemapToggle) {
 
-                var resizeEvt = (window.onorientationchange !== undefined &&
-                !has('android')) ? "orientationchange" : "resize";
-
-                on(window, resizeEvt, resizeMap);
-
-                function resizeMap() {
-                    mobile.hideAddressBar();
-                    adjustMapHeight();
-                    map.resize();
-                    map.reposition();
-                }
-                function adjustMapHeight() {
-                    var availHeight = mobile.getScreenSize().h - registry.byId('header').domNode.clientHeight - 1;
-                    if (has('iphone') || has('ipod')) {
-                        availHeight += iphoneAdjustment();
-                    }
-                    dom.byId("map").style.height = availHeight + "px";
-                }
-                function iphoneAdjustment() {
-                    var sz = mobile.getScreenSize();
-                    if (sz.h > sz.w) {
-                        //portrait
-                        //add address bar height back to map
-                        return screen.availHeight - window.innerHeight - 44;
-                    } else {
-                        //landscape
-                        var _conn = on(window, 'resize', function() {
-                            _conn.remove();
-                            resizeMap();
-                        });
-                        return 0;
-                    }
-                }
-
-                var map = new esri.Map("map", {
-                    basemap: "topo",
-                    center: [-105.234234, 40.23434],
-                    zoom: 7,
-                    slider: false
-                });
-                map.on("load", mapLoadHandler);
-                map.on("click", searchSeats);
-
-                var sg = new SeatGeekSearch({
-                    distance: "20mi",
-                    perPage: 10
+                var locatorTask = new Locator({
+                    url: "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer"
                 });
 
-                function searchSeats(evt) {
-                    var pt = webMercatorUtils.webMercatorToGeographic(evt.mapPoint);
-                    var sgResults = sg.searchByLoc(pt);
-                    sgResults.then(searchSuccess, searchFail);
-                }
-
-                function searchSuccess(results) {
-                    console.log(results);
-                }
-
-                function searchFail(err) {
-                    console.log("Search failed: ", err);
-                }
-                function mapLoadHandler(evt) {
-                    resizeMap();
-                    registry.byId('mapView').on('AfterTransitionIn', resizeMap);
-                    enableSpotlight();
-                }
-
-                function enableSpotlight() {
-                    var html = "<div id='spotlight' class='spotlight'></div>";
-                    domConstruct.place(html, dom.byId("map_container"), "first");
-                }
-
-                var search = new Search({
-                    map: map
-                }, dom.byId("search"));
-
-                //extent to limit search
-                var extent = new Extent({
-                    "spatialReference": {
-                        "wkid": 102100
-                    },
-                    "xmin": -13063280,
-                    "xmax": -13033928,
-                    "ymin": 4028345,
-                    "ymax": 4042715
+                var map = new Map({
+                    basemap: "topo"
                 });
 
-                //search.sources[0].searchExtent = extent;
+                var view = new MapView({
+                    container: "viewDiv", //DOM node that will contain the view
+                    map: map,
+                    center: [-105.07, 40.6],
+                    zoom: 3
+                });
 
-                search.startup();
-                search.on("select-result", showLocation);
-                search.on("clear-search", removeSpotlight);
+                var toggle = new BasemapToggle({
+                    view: view,
+                    nextBasemap: "hybrid"
+                });
 
-                function showLocation(e) {
-                    map.graphics.clear();
-                    var point = e.result.feature.geometry;
-                    var symbol = new SimpleMarkerSymbol().setStyle(
-                        SimpleMarkerSymbol.STYLE_SQUARE).setColor(
-                     new Color([255, 0, 0, 0.5])
-                   );
-                   var graphic = new Graphic(point, symbol);
-                   map.graphics.add(graphic);
+                view.ui.add(toggle, "top-right");                
 
-                   map.infoWindow.setTitle("Search Result");
-                   map.infoWindow.setContent(e.result.name);
-                   map.infoWindow.show(e.result.feature.geometry);
+                view.on("click", function(evt) {
+                    evt.stopPropagation();
 
-                   var spotlight = map.on("extent-change", function () {
-                      var geom = screenUtils.toScreenGeometry(map.extent,  map.width, map.height, e.result.extent);
-                      var width = geom.xmax - geom.xmin;
-                      var height = geom.ymin - geom.ymax;
+                    //get coordinates of click
+                    var lat = Math.round(evt.mapPoint.latitude * 1000) / 1000;
+                    var lon = Math.round(evt.mapPoint.longitude * 1000) / 1000;
 
-                      var max = height;
-                      if (width > height) {
-                         max = width;
-                      }
-
-                      var margin = '-' + Math.floor(max / 2) + 'px 0 0 -' + Math.floor(max / 2) + 'px';
-
-                      query(".spotlight").addClass("spotlight-active").style({
-                         width: max + "px",
-                         height: max + "px",
-                         margin: margin
-                      });
-                      spotlight.remove();
+                    view.popup.open({
+                        //set the title to coordinates of clicked location
+                        title: "Reverse geocode: [" + lon + ", " + lat + "]",
+                        location: evt.mapPoint //set at clicked location
                     });
-                 }
 
-                function enableSpotlight() {
-                  var html = "<div id='spotlight' class='spotlight'></div>"
-                  domConstruct.place(html, dom.byId("map_container"), "first");
-                }
-
-                function removeSpotlight() {
-                  query(".spotlight").removeClass("spotlight-active");
-                  map.infoWindow.hide();
-                  map.graphics.clear();
-                }
+                    locatorTask.locationToAddress(evt.mapPoint).then(function(response) {
+                        view.popup.content = response.address;
+                    }).otherwise(function(err) {
+                        view.popup.content = "No address found for this location";
+                    });
+                });
             });
         </script>
 
         <title></title>
     </head>
     <body class="nihilo">
-        <div id="mapView" data-dojo-type="dojox.mobile.View" data-dojo-props="selected: true">
-          <div id="header" data-dojo-type="dojox.mobile.Heading">
-            <div id="aboutButton" data-dojo-type="dojox.mobile.ToolBarButton" style="float: right;" moveTo="aboutView">
-              About
-            </div>
-          </div>
-          <div id="mapContainer" data-dojo-type="dojox.mobile.ContentPane">
-              <div id="search"></div>
-              <div id="map"></div>
-          </div>
-        </div>
-
-        <div id="aboutView" data-dojo-type="dojox.mobile.View">
-          <h1 data-dojo-type="dojox.mobile.Heading" data-dojo-props="back:'Map', moveTo:'mapView'">About</h1>
-
-          <p style="padding: 5px;">This area can contain additional information about your application.</p>
-
-        </div>
+        <div id="viewDiv"></div>
     </body>
 </html>
